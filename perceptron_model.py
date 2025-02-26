@@ -20,7 +20,7 @@ def f(x,w1,w2,b):
 #samples = tasku kiekis, features = pozymiai, centers = tasku grupiu kiekis
 #y = which class point belongs to
 #X = samples
-X, y = make_blobs(n_samples=20, n_features=2, centers = 2, random_state=38) #38
+X, y = make_blobs(n_samples=20, n_features=2, centers = 2, random_state=8)
 
 # taking two inputs at a time
 choice = input("Slenkstinei funkcijai spauskite 1, o sigmoidinei 2\n")
@@ -28,7 +28,7 @@ choice = input("Slenkstinei funkcijai spauskite 1, o sigmoidinei 2\n")
 print("Searching...")
 
 weights_array = []
-#random.seed(2) 
+random.seed(4) 
 
 for i in range(0,3):
     notFound = True
@@ -45,7 +45,7 @@ for i in range(0,3):
             
             if int(choice) == 2:
                 answer = sigmoid(a)
-                
+
             if answer != y[i]:
                 break
             if i == 19:
@@ -58,12 +58,24 @@ for i in range(0,3):
 
 plt.scatter(X[:, 0], X[:, 1], c=y)      #x[row,column]
 
+
 x = np.linspace(-10, 10, 1000)
 
+colors = ['c','m','y']
+Origins = []
+
 for i in range(0,3):
-    y1 = f(x,w1,w2,b)
-    y1 = f(x, weights_array[i][0], weights_array[i][1], weights_array[i][2])
-    plt.plot(x, y1)
+    y1 = f(x, weights_array[i][0], weights_array[i][1], weights_array[i][2])       #y1 = f(x,w1,w2,b)
+    plt.plot(x, y1, color=colors[i])
+
+    Origin1 = f(weights_array[i][2], weights_array[i][0], weights_array[i][1], weights_array[i][2])
+    Origins.append(Origin1) #solved for 0
+
+Vectors = np.array([[weights_array[i][0], weights_array[i][1]] for i in range(3)])
+origin = np.array([[weights_array[0][2],weights_array[1][2],weights_array[2][2]],[Origins[0],Origins[1],Origins[2]]]) #pradzios taskas
+
+plt.quiver(*origin, Vectors[:,0], Vectors[:,1], color=['c','m','y'], scale=20)
 
 plt.title("Dvi tasku klases ir skiriamieji pavirsiai")
+plt.axis('equal')
 plt.show()
