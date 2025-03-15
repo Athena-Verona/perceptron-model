@@ -15,7 +15,7 @@ data = data.drop('Sample_code', axis=1)
 #print('Number of instances = %d' % (data.shape[0]))
 #print('Number of attributes = %d' % (data.shape[1]))
 
-data = data.replace('?',np.nan)
+data = data.replace('?',np.NaN)
 
 #print('Number of missing values:')
 #for col in data.columns:
@@ -59,39 +59,19 @@ train, test, validate = np.split(
                                                                                         #antras padalijimas eina nuo 0.8 iki 0.9 ilgio
                                                                                         #trecias nuo 0.9 iki galo
 )
+
 # Display different sets
 #print("Training set:\n", train, "\n")
 #print("Testing set:\n", test, "\n")
 #print("Validation set:\n", validate)
 
 #neuronas mokomas naudojant paketini gradientini nusileidima
-W = (0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9)
-y = train.pop('Class')
 
 totalError = 999999
 epoch = 0
 minError = 0.8
-epochs = 3
+epochs = 100
 learning_rate = 0.1
-m = train.shape[0]
-n = len(W)
-
-def sigmoid(a):
-    return round(1/(1 + np.exp(-a)), 1)
 
 while (totalError > minError and epoch < epochs):
-    gradSum = [0] * n
-    totalError = 0
-    for i in range(0, m):  #???????????
-        a = (train.iloc[i] * W).sum() #daugina su visais eilutes W elementais
-        yi = sigmoid(a)
-        t = y[i]
-        for k in range(0, n): 
-            gradSum[k] = gradSum[k] + (t - yi)*train.iloc[i, k]
-        error = (t - yi)*(t - yi)
-        totalError = totalError + error
-    for k in range(0, n):
-        
-    epoch+=1
-
     
