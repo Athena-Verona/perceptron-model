@@ -19,14 +19,17 @@ def paketinis_GD(dataset, validation, test):
     y_test = test.pop('Class')
 
     totalError = 999999
-    totalErrorList = []
-    totalErrorListVal = []
     epoch = 0
-    y_pred = []
+    totalErrorList = []             #visi lists skirti vizualizacijoms
+    totalErrorListVal = []
+    y_pred= []
+    y_pred_val = []
+    accuracies_train= []
+    accuracies_validate = []
 
-    minError = 0.2
+    minError = 0.1
     epochs = 200
-    learning_rate = 0.99
+    learning_rate = 1.5 
 
     m = dataset.shape[0]
     m_val = validation.shape[0]
@@ -44,34 +47,45 @@ def paketinis_GD(dataset, validation, test):
             a = (dataset.iloc[i] * W).sum() #daugina su visais eilutes W elementais
             yi = sigmoid(a)
             t = y.iloc[i]
-            y_pred.append(round(yi, 1))
+            y_pred.append(round(yi, 0))
 
             for k in range(0, n): 
                 gradSum[k] = gradSum[k] + (yi - t)*yi*(1 - yi)*dataset.iloc[i, k]
 
             error = (t - yi)**2
             totalError = totalError + error
-        #accuracy/tikslumas
+
+        #MOKYMOSI TIKSLUMAS
+        acc = accuracy_score(y, y_pred)
+        accuracies_train.append(acc)
+        y_pred.clear()
 
         for k in range(0, n): 
             W[k] = W[k] - learning_rate * (gradSum[k] / m)
 
-        epoch+=1
-        totalError=totalError/m
-        totalErrorList.append(totalError)
-
-
-        #o cia validavimas
+        #VALIDAVIMAS!!!
         totalErrorVal=0
         for i in range(0, m_val): 
 
             a = (validate.iloc[i] * W).sum()
             yi = sigmoid(a)
+            
+            y_pred_val.append(round(yi, 0))
+
             t = y_val.iloc[i]
             error = (t - yi)**2
             totalErrorVal = totalErrorVal + error
 
+        #VALIDAVIMO TIKSLUMAS
+        acc = accuracy_score(y_val, y_pred_val)
+        accuracies_validate.append(acc)
+        y_pred_val.clear()
+
         totalErrorListVal.append(totalErrorVal/m_val)
+        totalError=totalError/m
+        totalErrorList.append(totalError)
+        epoch+=1
+
 
     #testavimas
     totalError = 0
@@ -89,6 +103,16 @@ def paketinis_GD(dataset, validation, test):
     epoch_numbers = list(range(1, epoch + 1))
     plt.plot(epoch_numbers, totalErrorList, color='blue')
     plt.plot(epoch_numbers, totalErrorListVal, color='red')
+    plt.title('Paklaida')
+    plt.show()
+    plt.clf()
+
+
+    plt.plot(epoch_numbers, accuracies_train, color='blue')
+    plt.plot(epoch_numbers, accuracies_validate, color='red')
+    plt.ylim(0, 1)
+    plt.title('Tikslumas')
+    plt.show()
 
     for k in range(0,n):
         print(W[k])
@@ -132,6 +156,3 @@ train, validate, test = np.split(
 )
 #neuronas mokomas naudojant paketini gradientini nusileidima
 paketinis_GD(train, validate, test)
-
-plt.title('Paklaida')
-plt.show()
