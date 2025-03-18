@@ -1,21 +1,16 @@
 import pandas as pd
 import numpy as np
 import random
-import time
 import matplotlib.pyplot as plt
 from sklearn.metrics import accuracy_score
+import time
 from math import sqrt
 
 def sigmoid(a):
     return 1/(1 + np.exp(-a))
 
-def paketinis_GD(dataset, validation, test):
-    #random.seed(1) #1
-    
-    #W = []
-    #for i in range(0,9):
-    #    weight = random.uniform(-1,1)
-    #    W.append(weight)
+def stochastinis_GD(dataset, validation, test):
+    #random.seed(1)
 
     in_num = 9 
     out_num = 9 
@@ -37,9 +32,9 @@ def paketinis_GD(dataset, validation, test):
     accuracies_train= []
     accuracies_validate = []
 
-    minError = 0.05
-    epochs = 250
-    learning_rate = 0.99
+    minError = 0.02
+    epochs = 300
+    learning_rate = 0.5
 
     m = dataset.shape[0]
     m_val = validation.shape[0]
@@ -48,11 +43,9 @@ def paketinis_GD(dataset, validation, test):
 
     print("searching...")
     start = time.time()
-    
+
     while (totalError > minError and epoch < epochs):
 
-        gradSum = [0] * n
-        gradBias = 0
         totalError = 0
 
         for i in range(0, m): 
@@ -60,23 +53,20 @@ def paketinis_GD(dataset, validation, test):
             a = (dataset.iloc[i] * W).sum() + bias #daugina su visais eilutes W elementais
             yi = sigmoid(a)
             t = y.iloc[i]
-            y_pred.append(round(yi, 0)) #TIKSLUMAS
+            y_pred.append(round(yi, 0))
 
             for k in range(0, n): 
-                gradSum[k] = gradSum[k] + (yi - t)*yi*(1 - yi)*dataset.iloc[i, k]
-            gradBias += (yi - t) * yi * (1 - yi)
+                W[k] = W[k] - learning_rate*( yi - t )*yi*( 1 - yi )*dataset.iloc[i, k]
+            bias = bias - learning_rate * (yi - t) * yi * (1 - yi)
 
             error = (t - yi)**2
             totalError = totalError + error
-
-        for k in range(0, n): 
-            W[k] = W[k] - learning_rate * (gradSum[k] / m)
-        bias = bias - learning_rate * (gradBias / m)
 
         #MOKYMOSI TIKSLUMAS
         acc = accuracy_score(y, y_pred)
         accuracies_train.append(acc)
         y_pred.clear()
+
 
         #VALIDAVIMAS!!!
         totalErrorVal=0
@@ -92,14 +82,15 @@ def paketinis_GD(dataset, validation, test):
             totalErrorVal = totalErrorVal + error
 
         #VALIDAVIMO TIKSLUMAS
-        acc = accuracy_score(y_val, y_pred_val)
-        accuracies_validate.append(acc)
+        acc_val = accuracy_score(y_val, y_pred_val)
+        accuracies_validate.append(acc_val)
         y_pred_val.clear()
 
         totalErrorListVal.append(totalErrorVal/m_val)
         totalError=totalError/m
         totalErrorList.append(totalError)
         epoch+=1
+
 
     end = time.time()
     print('> Neurono mokymosi laikas sekundemis: ', round((end - start),3))
@@ -109,10 +100,10 @@ def paketinis_GD(dataset, validation, test):
     for i in range(0, m_test): 
 
         a = (test.iloc[i] * W).sum() + bias #daugina su visais eilutes W elementais
-        t = y_test.iloc[i]
         yi = sigmoid(a)
         y_pred_test.append(round(yi, 0))
 
+        t = y_test.iloc[i]
         error = (t - yi)**2
         totalError = totalError + error
         
@@ -120,13 +111,15 @@ def paketinis_GD(dataset, validation, test):
     acc_test = accuracy_score(y_test, y_pred_test)
 
     
-    print('> Testavimo paklaida :', round(totalError,2))
+    print('> Testavimo paklaida:', round(totalError,2))
     print('> Testavimo tikslumas:', round(acc_test,2))
-    
+
     epoch_numbers = list(range(1, epoch + 1))
     plt.plot(epoch_numbers, totalErrorList, color='red', label='Mokymasis')
     plt.plot(epoch_numbers, totalErrorListVal, color='blue', label='Validavimas')
+
     plt.title('Paklaida')
+    #plt.xticks(np.arange(min(epoch_numbers), max(epoch_numbers)+1, 1))
     plt.legend()
     plt.show()
     plt.clf()
@@ -134,17 +127,16 @@ def paketinis_GD(dataset, validation, test):
 
     plt.plot(epoch_numbers, accuracies_train, color='red', label='Mokymasis')
     plt.plot(epoch_numbers, accuracies_validate, color='blue', label='Validavimas')
-    plt.ylim(0, 1)
-    plt.legend()
+
     plt.title('Tikslumas')
+    plt.ylim(0, 1)
+    #plt.xticks(np.arange(min(epoch_numbers), max(epoch_numbers)+1, 1))
+    plt.legend()
     plt.show()
 
-    print('> Svoriai: ')
+    print('\n> Svoriai:')
     for k in range(0,n):
-        print(round(W[k],3))
-    print('> Poslinkis:',bias)
-
-
+        print(W[k])
 
 data = pd.read_csv('breast-cancer-wisconsin.data')
 #prideti pavadinimas lengvesniam stulpeliu apdorojimui
@@ -178,15 +170,10 @@ for col in data.columns:
         continue
     data[col] = (data[col]-data[col].min())/(data[col].max()-data[col].min())
 
-train, validate, test = np.split( #30
+train, validate, test = np.split(
     data.sample(frac=1, random_state=8), [int(0.7 * len(data)), int(0.85 * len(data))]  #daliname: pirmas padalijimas eina iki 0.8 viso dataset ilgio
                                                                                         #antras padalijimas eina nuo 0.8 iki 0.9 ilgio
                                                                                         #trecias nuo 0.9 iki galo
 )
-
-#train = train.sample(frac=1, random_state=12)
-#validate = validate.sample(frac=1, random_state=13)
-#test = test.sample(frac=1, random_state=14)
-
 #neuronas mokomas naudojant paketini gradientini nusileidima
-paketinis_GD(train, validate, test)
+stochastinis_GD(train, validate, test)
